@@ -1,0 +1,6 @@
+build/
+dist/
+gitignore/
+previous versions/
+env/
+__pycache__/
