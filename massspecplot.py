@@ -4,10 +4,11 @@
 # a tolerance for what it considers the same amu
 # TODO: Fix table sorting when formula column (with QLabels as cells) is clicked
 # TODO: Add mass  and hide button to plot table
-# TODO: Crashes when weird formula ('##$Ca3') added via QLineEdit
 
 import sys
 import itertools
+import operator
+import functools
 from massspecui import Ui_MassSpec
 from PyQt5.QtWidgets import QPushButton, QWidget, QApplication, QTableWidgetItem, QLabel, QMainWindow, QLineEdit
 from PyQt5.QtGui import QIcon
@@ -35,13 +36,16 @@ class MassSpec(QWidget):
         self.colorCounter = 0
         self.uniqueColors = 9
 
+        # Table for molecules added to plot
+        # Creates a column for molecular formula and 'Remove' button
         self.ui.selectedMoleculesTable.setColumnCount(2)
         self.ui.selectedMoleculesTable.setHorizontalHeaderLabels(['Molecule', ''])
 
+        # Add chemical formula to plot by line edit
         self.ui.formulaLineEdit.returnPressed.connect(self.handleAddFromLineEdit)
 
+        # Mass spectrum plot parameters
         self.plot = self.ui.graphicsView.plotItem
-
         self.plot.showGrid(False, True, 0.2)
         self.plot.showAxis('top', show=True)
         self.plot.showAxis('right', show=True)
@@ -120,7 +124,7 @@ class MassSpec(QWidget):
     def consolidateFormulaList(self, formulaList):
         outputList = []
         for index in range(len(formulaList)):
-            if not self.isFloat(formulaList[index]):
+            if not self.isFloat(formulaList[index]) and formulaList[index].isalpha():
                 if formulaList[index] not in outputList:
                     outputList.append(formulaList[index])
                     outputList.append(formulaList[index + 1])
@@ -134,20 +138,16 @@ class MassSpec(QWidget):
     # Used in generateMassSpectrum
     # Ex. ['H', 2, 'O', 1] --> [{'isotopes': [[1, 99.9885], [2, 0.0115]], 'num': 2}, {...}]
     def replaceSymWithIsotopes(self, formulaList):
-        elements = []
-        elemObj = {}
+        outputList = []
         for entry in formulaList:
-            if not self.isFloat(entry):
+            if isinstance(entry, str):
                 for element in self.elements:
                     if element['symbol'] == entry:
-                        elemObj['isotopes'] = element['isotopes']
-
+                        isotopes = [[isotope[0], isotope[1] / 100] for isotope in element['isotopes']]
+                        outputList.append(isotopes)
             else:
-                elemObj['num'] = entry
-                elements.append(elemObj)
-                elemObj = {}
-
-        return elements
+                outputList.append(entry)
+        return outputList
 
     # Removes sub tags from formula string
     # Used in handleformulaEmitted slot, handleRemoveMolecule click handler
@@ -174,10 +174,8 @@ class MassSpec(QWidget):
 
     # Adds sub tags to appropriate place in formula
     def formatFormula(self, formula):
-
         splitFormula = list(formula)
         formattedSplitFormula = []
-
         for char in splitFormula:
             try:
                 float(char)
@@ -191,7 +189,6 @@ class MassSpec(QWidget):
         # Filter out '</sub>', '<sub>'
         formattedSplitFormula = [x for index, x in enumerate(formattedSplitFormula) if not self.subsub(formattedSplitFormula, index, x)]
         formattedFormula = ''.join(formattedSplitFormula)
-
         return formattedFormula
 
     # Checks if number can be typed to float
@@ -247,57 +244,11 @@ class MassSpec(QWidget):
             formula = self.formatFormula(self.selectedMolecules[i]['formula'])
             label = QLabel(formula)
             label.setStyleSheet('QLabel { color: ' + self.selectedMolecules[i]['color'].name() + '; font-weight: bold; font-size: 16px }')
-            #label.setStyleSheet('QLabel { color: ' + colorConversion[self.selectedMolecules[i]['color']] + '; font-weight: bold; font-size: 24px }')
             rmBtn = QPushButton('Remove')
             rmBtn.clicked.connect(self.handleRemoveMolecule)
             self.ui.selectedMoleculesTable.setCellWidget(i, 0, label)
             self.ui.selectedMoleculesTable.setCellWidget(i, 1, rmBtn)
             #self.ui.selectedMoleculesTable.setItem(i, 0, QTableWidgetItem(self.selectedMolecules[i]))
-
-    # Finds all combinations (of isotopes) of a single element up to the number
-    # dictated by the molecular formula, returns a list of these combinations
-    def findIsotopeCombinations(self, isotopeList, num):
-        # Creates generator with all combinations of isotopes up to num
-        #comboGenerator = itertools.combinations_with_replacement(isotopeList, num)
-        comboGenerator = itertools.product(isotopeList, repeat=num)
-
-        # Accumulates amu and abundance for those combinations into a single amu
-        # and abundance sublist
-        # Returns the outputList
-        outputList = []
-        for combo in comboGenerator:
-            comboTotalMass = 0
-            comboAbundance = 1
-            for isotope in combo:
-                comboTotalMass += isotope[0]
-                comboAbundance *= isotope[1] / 100
-            if comboAbundance > 0.0001:
-                outputList.append([comboTotalMass, comboAbundance])
-        return outputList
-
-    # Returns a list of lists with each sublist representing an element
-    # Calls findIsotopeCombinations for each element in list and returns list of lists
-    def findIsotopeAbundancesByElement(self, elementList):
-        outputList = []
-        for i in range(len(elementList)):
-            combinationsList = self.findIsotopeCombinations(elementList[i]['isotopes'], elementList[i]['num'])
-            outputList.append(combinationsList)
-        return outputList
-
-    # Uses the generated index sets to combine the total amu and abundances
-    # for each element into the amu and abundances for each isotope of the final
-    # input molecule
-    # Only adds isotope if abundance is greater than 0.0001
-    def findFinalIsotopes(self, elementList, indexSets):
-        outputList = []
-        for indexSet in indexSets:
-            combination = [0, 1]
-            for index in range(len(elementList)):
-                combination[0] += elementList[index][indexSet[index]][0]
-                combination[1] *= elementList[index][indexSet[index]][1]
-            if combination[1] > 0.0001:
-                outputList.append(combination)
-        return outputList
 
     # Generates a list of sets that contain indeces representing all combinations
     # of each possible isotope and abundance
@@ -322,25 +273,12 @@ class MassSpec(QWidget):
                 return checkList.index(i)
         return None
 
-    # Consolidates the final isotope list by popping each item from inputList
-    # and calling isotopeIndex to check if an isotope already exists in the output
-    # Adds abundances if isotope already exists, otherwise adds entry to output
-    def consolidateIsotopes(self, isotopeList):
-        outputList = []
-        for i in range(len(isotopeList)):
-            isotope = isotopeList.pop()
-            index = self.isotopeIndex(isotope[0], outputList)
-            if index != None:
-                outputList[index][1] += isotope[1]
-            else:
-                outputList.append(isotope)
-        return outputList
-
+    # Generates the np.arrays and pyqtgraph plotItems and
+    # adds them to the Mass Spec Plot
+    # np.array ex: self.ex = np.array([[6.015, 0], [6.015, 0.0759]])
+    # np.array ex: self.exTwo = np.array([[7.016, 0], [7.016, 0.9241]])
     def constructAndPlotData(self, isotopeList, formulaStr, color):
         arrayList = []
-
-        #self.test = np.array([[6.015, 0], [6.015, 0.0759]])
-        #self.testTwo = np.array([[7.016, 0], [7.016, 0.9241]])
 
         for isotope in isotopeList:
             array = np.array([[isotope[0], 0], [isotope[0], isotope[1]]])
@@ -349,6 +287,8 @@ class MassSpec(QWidget):
 
         self.plotItems[formulaStr] = arrayList
 
+    # Normalizes the abundance of each isotope to the isotope with the largest
+    # abundance
     def normalizeIsotopes(self, isotopeList):
         maximum = 0
         for isotope in isotopeList:
@@ -383,42 +323,81 @@ class MassSpec(QWidget):
                         isValid = False
         return isValid
 
+    # Consolidates the final isotope list by calling isotopeIndex to check
+    # if an isotope already exists in the output
+    # Adds abundances if isotope already exists, otherwise adds entry to output
+    def consolidateIsotopes(self, isotopeList):
+        outputList = []
+        for isotope in isotopeList:
+            index = self.isotopeIndex(isotope[0], outputList)
+            if index != None:
+                outputList[index][1] += isotope[1]
+            else:
+                outputList.append(isotope)
+        return outputList
+
+    # Convolutes a single list of isotopes from an element with a list of
+    # isotopes representing a molecule
+    def convoluteElement(self, totalList, elementList):
+        # Ex. H2 --> [([1, 0.999885], [1, 0.999885]), ([1, 0.999885], [2, 0.000115]),
+        # ([2, 0.000115], [1, 0.999885]), ([2, 0.000115], [2, 0.000115])]
+        combinations = list(itertools.product(totalList, elementList))
+
+        # Ex. H2 --> [2, 3, 3, 4]
+        massList = [combo[0][0] + combo[1][0] for combo in combinations]
+
+        # Ex. H2 --> [(2, 0.999770013225), (3, 0.000114986775),
+        # (3, 0.000114986775), (4, 1.3225000000000001e-08)]
+        abundanceList = [combo[0][1] * combo[1][1] for combo in combinations]
+
+        # Ex. H2 --> [(2, 0.999770013225), (3, 0.000114986775),
+        # (3, 0.000114986775), (4, 1.3225000000000001e-08)]
+        resultTuples = list(zip(massList, abundanceList))
+
+        # Ex. H2 --> [(2, 0.999770013225), (3, 0.000114986775),
+        # (3, 0.000114986775), (4, 1.3225000000000001e-08)]
+        resultList = [list(combo) for combo in resultTuples]
+        return self.consolidateIsotopes(resultList)
+
+    # Convolutes elements of a formulaList one by one adding each mass and abundance
+    # to the previously returned values by way of the self.convoluteElement function
+    def recursiveGenerateMasses(self, formulaList, isotopeList, count=0):
+        # Terminating Case, no more elements to add
+        if formulaList == []:
+            return isotopeList
+
+        # Convoluting elements up to 'count' or each element
+        elif isinstance(formulaList[0], list) and count < formulaList[1]:
+            #isotopeList.append(formulaList[0])
+            isotopeList = self.convoluteElement(isotopeList, formulaList[0])
+            count += 1
+            #print(formulaList[0], isotopeList)
+            return self.recursiveGenerateMasses(formulaList, isotopeList=isotopeList[:], count=count)
+
+        # Convolute the last element, skip to next element
+        elif isinstance(formulaList[0], list) and count == formulaList[1]:
+            #print(formulaList[2:], isotopeList)
+            count = 0
+            return self.recursiveGenerateMasses(formulaList[2:], isotopeList=isotopeList[:], count=count)
+
+
     def generateMassSpectrum(self, consolidatedList, formulaStr, color):
+
         # Replace the element symbols with an object containing a list of
         # isotopes and the amount of the element in the molecular formula
         # Ex. ['H', 2, 'O', 1] --> [{'isotopes': [[1, 99.9885], [2, 0.0115]], 'num': 2}, {...}]
+        #isotopesByElement = self.replaceSymWithIsotopes(consolidatedList)
         isotopesByElement = self.replaceSymWithIsotopes(consolidatedList)
+        #print('isotopesByElement: ', isotopesByElement)
 
-        # Generates a list of lists
-        # Each list represents a single element and contains sublists.
-        # Each sublist represents the total amu (and abundance)
-        # for a combination of isotopes up to the number defined in the molecular formula
-        # The lists are organized by element
-        # ex. H2O: [[[2, 0.999770013225], [3, 0.000114986775]], [[16, 0.9975700000000001], [17, 0.00037999999999999997], [18, 0.0020499999999999997]]]
-        relativeAbundancesByElement = self.findIsotopeAbundancesByElement(isotopesByElement)
-        #print(relativeAbundancesByElement)
-
-        # Generates a list of sets of indeces (one index for each element)
-        # The index sets represent all possible combinations of element totals
-        # Ex. H2O --> [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
-        indexSets = sorted(self.generateIndexSets(relativeAbundancesByElement, [0 for i in relativeAbundancesByElement], output=set()))
-
-        # Combines the total amu and total abundances by element using the sets of indeces to find
-        # all possible isotopic combinations of the final amu and abundances of the
-        # input molecular formula
-        # Ex. H2O --> [[18, 0.9973405720928633], [19, 0.00037991260502549996], [20, 0.0020495285271112497], [19, 0.00011470735713675001], [19, 0.00011470735713675001]]
-        finalIsotopes = self.findFinalIsotopes(relativeAbundancesByElement, indexSets)
-
-        # Sums and removes duplicate amu values
-        # Returns a list of mass values and respective abundances for the molecule
-        # Changing the amu 'tolerance' here could allow for precise isotope values instead
-        # of whole amu values
-        # Ex. H2O --> [[18, 0.9973405720928633], [19, 0.000609327319299], [20, 0.0020495285271112497]]
-        consolidatedFinalIsotopes = sorted(self.consolidateIsotopes(finalIsotopes))
+        finalIsotopes = self.recursiveGenerateMasses(isotopesByElement, isotopesByElement[0], count=1)
+        #print(finalIsotopes)
 
         # Normalizes by setting most abundant mass to 1.0
         # Ex. H2O --> [[18, 1.0], [19, 0.0006109521023699666], [20, 0.002054993634531912]]
-        normalizedFinalIsotopes = self.normalizeIsotopes(consolidatedFinalIsotopes)
+        #normalizedFinalIsotopes = self.normalizeIsotopes(consolidatedFinalIsotopes)
+        normalizedFinalIsotopes = sorted(self.normalizeIsotopes(finalIsotopes))
+        #print('normalizedFinalIsotopes: ', normalizedFinalIsotopes)
 
         # Constructs the plotItems used to render each simulated mass spectrum
         self.constructAndPlotData(normalizedFinalIsotopes, formulaStr, color)
@@ -435,12 +414,15 @@ class MassSpec(QWidget):
     def addByFormula(self, formula):
         # Determine color of plot
         color = self.generatePlotColor()
+        #print(color)
 
         # Convert formula text to list of elements and their number
         formulaList = self.formulaToList(formula)
+        print(formulaList)
 
         # Consolidate the list and sum repeated elements
         consolidatedList = self.consolidateFormulaList(formulaList)
+        #print(consolidatedList)
 
         # Checks if formula to be added is already in selectedMolecules
         inList = False
