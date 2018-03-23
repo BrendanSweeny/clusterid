@@ -251,6 +251,8 @@ class MainWindow(QMainWindow):
         #print(clickedButton.parent())
         index = tableWidget.indexAt(clickedButton.pos())
         formulaCell = tableWidget.cellWidget(index.row(), 0)
+        # Switches to Mass Spec Tab
+        self.ui.tabWidget.setCurrentIndex(1)
         self.formulaEmitted.emit(formulaCell.text())
 
     # Click handler for non-custom widget table cells

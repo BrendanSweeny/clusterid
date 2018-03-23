@@ -3,7 +3,8 @@
 # When consolidating isotope masses (e.g. H2O 19amu), it may be necessary to include
 # a tolerance for what it considers the same amu
 # TODO: Fix table sorting when formula column (with QLabels as cells) is clicked
-# TODO: Add mass  and hide button to plot table
+# TODO: Add mass and hide button to plot table
+# TODO: Try removing miniscule abundances before plotting
 
 import sys
 import itertools
@@ -275,16 +276,13 @@ class MassSpec(QWidget):
 
     # Generates the np.arrays and pyqtgraph plotItems and
     # adds them to the Mass Spec Plot
+    # Creats plot items for each isotope in the molecule
+    # Each isotope is composed of a np.array and represted by a vertical line
     # np.array ex: self.ex = np.array([[6.015, 0], [6.015, 0.0759]])
     # np.array ex: self.exTwo = np.array([[7.016, 0], [7.016, 0.9241]])
     def constructAndPlotData(self, isotopeList, formulaStr, color):
-        arrayList = []
-
-        for isotope in isotopeList:
-            array = np.array([[isotope[0], 0], [isotope[0], isotope[1]]])
-            plotItem = self.ui.graphicsView.plot(array, pen=pg.mkPen(color, width=3))
-            arrayList.append(plotItem)
-
+        arrayList = [self.ui.graphicsView.plot(np.array([[isotope[0], 0], [isotope[0], isotope[1]]]),
+            pen=pg.mkPen(color, width=3)) for isotope in isotopeList]
         self.plotItems[formulaStr] = arrayList
 
     # Normalizes the abundance of each isotope to the isotope with the largest
@@ -294,10 +292,8 @@ class MassSpec(QWidget):
         for isotope in isotopeList:
             if isotope[1] > maximum:
                 maximum = isotope[1]
-
         for isotope in isotopeList:
             isotope[1] = isotope[1] / maximum
-
         return isotopeList
 
     # Checks if element symbol is in self.elements list of objects
