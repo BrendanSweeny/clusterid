@@ -11,6 +11,7 @@ from clusteridv2bui import Ui_MainWindow
 from periodictableui import Ui_PeriodicTable
 from massspecui import Ui_MassSpec
 from massspecplot import MassSpec
+from periodictable import PeriodicTable
 import math
 from operator import attrgetter, itemgetter
 from elements import Element
@@ -19,6 +20,10 @@ import pyqtgraph as pg
 import numpy as np
 
 #QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+
+class NumericTableItem(QTableWidgetItem):
+    def __lt__(self, other):
+        return (self.data(Qt.UserRole) < other.data(Qt.UserRole))
 
 class MainWindow(QMainWindow):
 
@@ -224,15 +229,21 @@ class MainWindow(QMainWindow):
         # Sorting interferes with insertion order, is enabled after insertion:
         tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(len(matchList))
-        columnCount = tableWidget.columnCount()
 
         for i in range(len(matchList)):
             if matchList[i]['formula']:
                 matchString = self.formatFormula(matchList[i]['formula'])
+                formulaTableItem = NumericTableItem()
+                formulaTableItem.setData(Qt.UserRole, matchList[i]['formula'])
+                #tableWidget.setItem(i, 0, formulaTableItem)
                 tableWidget.setCellWidget(i, 0, QLabel(matchString))
-                tableWidget.setItem(i, 1, QTableWidgetItem(str(round(matchList[i]['preciseMass'], 5))))
+                preciseMassTableItem = NumericTableItem(str(round(matchList[i]['preciseMass'], 5)))
+                preciseMassTableItem.setData(Qt.UserRole, matchList[i]['preciseMass'])
+                tableWidget.setItem(i, 1, preciseMassTableItem)
                 if pctDif:
-                    tableWidget.setItem(i, 2, QTableWidgetItem(str(round(matchList[i]['pctDif'], 5)) + '%'))
+                    pctDifTableItem = NumericTableItem(str(round(matchList[i]['pctDif'], 5)) + '%')
+                    pctDifTableItem.setData(Qt.UserRole, matchList[i]['pctDif'])
+                    tableWidget.setItem(i, 2, pctDifTableItem)
                     self.addBtn = QPushButton('Add')
                     self.addBtn.clicked.connect(lambda: self.handleCellButton(tableWidget))
                     tableWidget.setCellWidget(i, 3, self.addBtn)
@@ -319,6 +330,7 @@ class MainWindow(QMainWindow):
         if self.ui.filterMatched.text():
             self.handleFilter(self.matchedClusters, self.ui.matchOutput, True, filterStr=self.ui.filterMatched.text())
         else:
+            print(self.matchedClusters)
             self.showMatches(self.matchedClusters, self.ui.matchOutput, True)
 
     # Recursive function used to find all combinations of included elements
@@ -380,18 +392,8 @@ class MainWindow(QMainWindow):
         if self.ui.filterClusterSeries.text():
             self.handleFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False, filterStr=self.ui.filterClusterSeries.text())
         else:
+            print(combinationDicts)
             self.showMatches(combinationDicts, self.ui.seriesOutput, False)
-
-    # Function called by checking 'sort by mass' QCheckBox
-    # Checks for stored clusterseriesdicts and value of box, sorts, and reshows
-    # combinations
-    def toggleSortByMass(self, bool):
-        if bool and self.clusterSeriesDicts:
-            sortedClusterSeriesMass = sorted(self.clusterSeriesDicts, key=itemgetter('mass'))
-            self.showCombinations(self.lastRunClusterElements, sortedClusterSeriesMass)
-        elif not bool and self.clusterSeriesDicts:
-            sortedClusterSeriesAtoms = sorted(self.clusterSeriesDicts, key=itemgetter('combination'))
-            self.showCombinations(self.lastRunClusterElements, sortedClusterSeriesAtoms)
 
     # Allows filtering of formula or number with filter strings
     # separataed by commas
@@ -412,31 +414,6 @@ class MainWindow(QMainWindow):
             if keep == True:
                 filteredEntries.append(entry)
         self.showMatches(filteredEntries, tableWidget, pctDif)
-
-class PeriodicTable(QWidget):
-
-    # Custom signal
-    elementEmitted = pyqtSignal(str, bool)
-
-    def __init__(self):
-        super().__init__()
-
-        self.ui = Ui_PeriodicTable()
-        self.ui.setupUi(self)
-
-        # Iterates through all the element buttons ('ebtn') and adds click
-        # behavior
-        for name in dir(self.ui):
-            subClass = 'ebtn'
-            if subClass in name:
-                btn = getattr(self.ui, name)
-                btn.clicked[bool].connect(self.emitElement)
-
-    # Slot for element button clicked signal
-    # Emits custom signal with elemental symbol and boolean
-    def emitElement(self, checked):
-        symbol = self.sender().text()
-        self.elementEmitted.emit(symbol, checked)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>799</width>
-    <height>887</height>
+    <height>904</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>450</x>
-      <y>435</y>
+      <y>499</y>
       <width>261</width>
       <height>23</height>
      </rect>
@@ -31,7 +31,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>410</y>
+      <y>474</y>
       <width>191</width>
       <height>20</height>
      </rect>
@@ -43,8 +43,8 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>355</y>
+      <x>60</x>
+      <y>436</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -57,7 +57,7 @@
     <property name="geometry">
      <rect>
       <x>469</x>
-      <y>352</y>
+      <y>416</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -70,7 +70,7 @@
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>390</y>
+      <y>471</y>
       <width>121</width>
       <height>21</height>
      </rect>
@@ -79,9 +79,9 @@
    <widget class="QPushButton" name="btnFindClusterSeries">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>434</y>
-      <width>241</width>
+      <x>50</x>
+      <y>498</y>
+      <width>251</width>
       <height>23</height>
      </rect>
     </property>
@@ -93,7 +93,7 @@
     <property name="geometry">
      <rect>
       <x>240</x>
-      <y>360</y>
+      <y>441</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -103,7 +103,7 @@
     <property name="geometry">
      <rect>
       <x>590</x>
-      <y>351</y>
+      <y>415</y>
       <width>121</width>
       <height>21</height>
      </rect>
@@ -113,7 +113,7 @@
     <property name="geometry">
      <rect>
       <x>670</x>
-      <y>410</y>
+      <y>474</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -122,8 +122,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>390</y>
+      <x>60</x>
+      <y>470</y>
       <width>41</width>
       <height>20</height>
      </rect>
@@ -136,9 +136,9 @@
     <property name="geometry">
      <rect>
       <x>360</x>
-      <y>466</y>
+      <y>530</y>
       <width>431</width>
-      <height>381</height>
+      <height>331</height>
      </rect>
     </property>
     <property name="font">
@@ -172,7 +172,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>6</y>
+      <y>10</y>
       <width>781</width>
       <height>341</height>
      </rect>
@@ -185,7 +185,7 @@
     <property name="geometry">
      <rect>
       <x>590</x>
-      <y>380</y>
+      <y>444</y>
       <width>121</width>
       <height>21</height>
      </rect>
@@ -195,7 +195,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>380</y>
+      <y>444</y>
       <width>41</width>
       <height>20</height>
      </rect>
@@ -208,9 +208,9 @@
     <property name="geometry">
      <rect>
       <x>5</x>
-      <y>466</y>
+      <y>530</y>
       <width>341</width>
-      <height>381</height>
+      <height>331</height>
      </rect>
     </property>
     <property name="font">
@@ -232,6 +232,135 @@
     <column/>
     <column/>
     <column/>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>350</y>
+      <width>321</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step 2: Which Charged Species Has A Mass of X?</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>400</y>
+      <width>511</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step 4: What is the Mass of Every Combination of Element</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>350</y>
+      <width>341</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Step 3: What is the Mass of the Following Formula?</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>420</y>
+      <width>511</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Up to the Specified Number of Max Atoms (per element)?</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>370</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Chemical Formula:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="formulaLineEdit">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>370</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="formulaMassLineEdit">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>370</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>370</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Mass:</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
