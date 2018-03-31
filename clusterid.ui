@@ -63,7 +63,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Target Mass:</string>
+     <string>Target Mass (amu):</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="filterClusterSeries">
@@ -124,7 +124,7 @@
      <rect>
       <x>60</x>
       <y>470</y>
-      <width>41</width>
+      <width>91</width>
       <height>20</height>
      </rect>
     </property>
@@ -270,7 +270,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Step 4: What is the Mass of All Combinations of Selected Elements?</string>
+     <string>Step 3: What is the Mass of All Combinations of Selected Elements?</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
@@ -278,7 +278,7 @@
      <rect>
       <x>10</x>
       <y>350</y>
-      <width>341</width>
+      <width>361</width>
       <height>20</height>
      </rect>
     </property>
@@ -290,7 +290,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Step 3: What is the Mass of the Following Formula?</string>
+     <string>Quick Check: What is the Mass of the Following Formula?</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_9">
@@ -298,7 +298,7 @@
      <rect>
       <x>60</x>
       <y>420</y>
-      <width>511</width>
+      <width>371</width>
       <height>20</height>
      </rect>
     </property>
@@ -339,7 +339,7 @@
    <widget class="QLineEdit" name="formulaMassLineEdit">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>320</x>
       <y>370</y>
       <width>61</width>
       <height>21</height>
@@ -354,12 +354,12 @@
      <rect>
       <x>250</x>
       <y>370</y>
-      <width>41</width>
+      <width>61</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Mass:</string>
+     <string>Mass (amu):</string>
     </property>
    </widget>
   </widget>

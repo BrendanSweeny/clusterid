@@ -15,12 +15,13 @@ import math
 from operator import attrgetter, itemgetter
 from elements import Element
 from elementdata import ElementData
-import pyqtgraph as pg
-import numpy as np
 import utils
+import findMatch
 
 #QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 
+# Redefined 'less than' function for QTableWidgetItem that allows data stored
+# as integer (rather than string) to be used when sorting by column
 class NumericTableItem(QTableWidgetItem):
     def __lt__(self, other):
         return (self.data(Qt.UserRole) < other.data(Qt.UserRole))
@@ -129,20 +130,6 @@ class MainWindow(QMainWindow):
         else:
             self.targetVal = float(value)
 
-
-    # Finds the precise mass of the match, used to calculate % difference
-    # Takes a set or list as combination and list of selected elements
-    # Returns a float
-    def findPreciseMass(self, combination, includeList):
-      total = 0
-      for i in range(len(combination)):
-        total = total + combination[i] * includeList[i]
-      return total
-
-    # Takes two floats/integers and returns a float/integer
-    def findPercentDifference(self, valOne, valTwo):
-        return abs((valOne - valTwo)/((valOne + valTwo)/2) * 100)
-
     # Used by both cluster series and matches to setText of appropriate text box
     def displayFormattedOutput(self, uiObject, outputString):
         uiObject.setHtml(outputString)
@@ -174,70 +161,8 @@ class MainWindow(QMainWindow):
                             totalMass += elem['mass'] * formulaList[index + 1]
             self.ui.formulaMassLineEdit.setText(str(round(totalMass, 2)))
         else:
+            self.ui.formulaMassLineEdit.setText('')
             print('Invalid Formula Entered.')
-
-    # Finds all possible ways to partition the target value
-    # with the values contained in a list.
-    # Recursively finds each combination by incrementing last value in list by +1 until no remainder,
-    # then increments the second to last by +1, etc.
-
-    # Returns a set of sets (each being a suitable combination)
-    def recursiveFindCombinations(self, target, numList, depth=0, combination=[], answer=set()):
-      if numList != []:
-        maxIons = int(target // numList[0]) + 1
-
-        # Adds an additional multiple of the current value for each iteration
-        for i in range(0, maxIons + 1):
-
-          # Most target values will be integers. This allows for some tolerance between precise atomic
-          # masses and imprecise target value
-          # if math.isclose(target, numList[0] * i, abs_tol=1):
-          if abs(target - numList[0] * i) <= self.absoluteTolerance:
-            remainder = 0
-          else:
-            remainder = target - (numList[0] * i)
-          combination[depth] = i
-
-          # Terminating case: when the target is matched, combo list is copied
-          if numList[1:] == [] and remainder == 0:
-            answer.add(tuple(combination[:]))
-          #print('n:', numList[0], 'maxIons:', maxIons, 'i:', i, 'total:', i * numList[0], 'remainder:', remainder, 'numList:', numList[1:], 'combo:', combination, 'answer:', answer)
-
-          # Recursion: calls the function for the next value in numList
-          self.recursiveFindCombinations(remainder, numList[1:], depth + 1, combination, answer=answer)
-      return answer
-
-    # Checks for '</sub>', '<sub>' in list
-    def subsub(self, inputList, index, x):
-        #print(inputList, index, x)
-        if index + 1 < len(inputList) and x == '</sub>' and inputList[index + 1] == '<sub>':
-            return True
-        elif x == '<sub>' and inputList[index - 1] == '</sub>':
-            return True
-        else:
-            return False
-
-    # Adds subscripts to formula string for display in output tables
-    def formatFormula(self, formula):
-
-        splitFormula = list(formula)
-        formattedSplitFormula = []
-
-        for char in splitFormula:
-            try:
-                float(char)
-            except ValueError:
-                formattedSplitFormula.append(char)
-            else:
-                formattedSplitFormula.append('<sub>')
-                formattedSplitFormula.append(char)
-                formattedSplitFormula.append('</sub>')
-
-        # Filter out '</sub>', '<sub>'
-        formattedSplitFormula = [x for index, x in enumerate(formattedSplitFormula) if not self.subsub(formattedSplitFormula, index, x)]
-        formattedFormula = ''.join(formattedSplitFormula)
-
-        return formattedFormula
 
     # Function that populates the table with rows to be returned for the find matches functionality
     # elementObjects: a list of objects repesenting elements in the periodic table
@@ -249,7 +174,7 @@ class MainWindow(QMainWindow):
 
         for i in range(len(matchList)):
             if matchList[i]['formula']:
-                matchString = self.formatFormula(matchList[i]['formula'])
+                matchString = utils.formatFormula(matchList[i]['formula'])
                 tableWidget.setCellWidget(i, 0, QLabel(matchString))
                 # Uses the modified QTableWidgetItem with updated sorting method
                 preciseMassTableItem = NumericTableItem(str(round(matchList[i]['preciseMass'], 5)))
@@ -286,14 +211,6 @@ class MainWindow(QMainWindow):
     def handleCellClicked(self):
         row = self.ui.matchOutput.selectedIndexes()
 
-    # Finds total number of unique elements in a match, used to sort returned matches
-    def findNumberOfElements(self, combination):
-        totalUniqueElements = 0
-        for i in combination:
-            if i:
-                totalUniqueElements += 1
-        return totalUniqueElements
-
     def handleFindMatches(self):
         # Find elemental masses for element list populated by pushbuttons
         sortedElementObjects = sorted(self.selectedElements, key=attrgetter('mass'), reverse=True)
@@ -308,18 +225,17 @@ class MainWindow(QMainWindow):
 
         # Call to recursive function, needs answer=set() to avoid
         # unwanted mutation
-        allanswers = self.recursiveFindCombinations(self.targetVal, sortedMasses, combination=combinationTemplate, answer=set())
+        allanswers = findMatch.recursiveFindCombinations(self.targetVal, sortedMasses, self.absoluteTolerance, combination=combinationTemplate, answer=set())
 
         # Sort answers by total atoms
         sortedallanswers = sorted(allanswers, key=sum)
-        #print(sortedallanswers)
 
         # Create list of dicts and populate with first 20 answers (by lowest
         # total atoms), pct dif from target, and precise mass
         answerDicts = []
         for answer in sortedallanswers[:]:
-            preciseMass = self.findPreciseMass(answer, sortedMasses)
-            pctDif = self.findPercentDifference(preciseMass, self.targetVal)
+            preciseMass = findMatch.findPreciseMassFromCombination(answer, sortedMasses)
+            pctDif = utils.findPercentDifference(preciseMass, self.targetVal)
             answerDict = {}
             formula = ''
             for index in range(len(answer)):
@@ -329,7 +245,7 @@ class MainWindow(QMainWindow):
             answerDict['part'] = answer
             answerDict['pctDif'] = pctDif
             answerDict['preciseMass'] = preciseMass
-            answerDict['uniqueElements'] = self.findNumberOfElements(answer)
+            answerDict['uniqueElements'] = findMatch.findNumberOfElements(answer)
             answerDict['atomSum'] = sum(answer)
             answerDicts.append(answerDict)
         # Sort answer dict by percent difference from target
@@ -405,11 +321,15 @@ class MainWindow(QMainWindow):
         self.clusterSeriesDicts = combinationDicts
         #self.showCombinations(sortedElementObjects, self.clusterSeriesDicts)
 
+        self.ui.seriesOutput.setSortingEnabled(False)
+
         if self.ui.filterClusterSeries.text():
             self.handleFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False, filterStr=self.ui.filterClusterSeries.text())
         else:
             #print(combinationDicts)
             self.showMatches(combinationDicts, self.ui.seriesOutput, False)
+
+        self.ui.seriesOutput.setSortingEnabled(True)
 
     # Allows filtering of formula or number with filter strings
     # separataed by commas

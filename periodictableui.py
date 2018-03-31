@@ -457,7 +457,7 @@ class Ui_PeriodicTable(object):
         self.ebtnZn.setCheckable(True)
         self.ebtnZn.setObjectName("ebtnZn")
         self.label_3 = QtWidgets.QLabel(PeriodicTable)
-        self.label_3.setGeometry(QtCore.QRect(240, 10, 171, 20))
+        self.label_3.setGeometry(QtCore.QRect(200, 10, 231, 20))
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setBold(True)
@@ -580,5 +580,15 @@ class Ui_PeriodicTable(object):
         self.ebtnPm.setText(_translate("PeriodicTable", "Pm"))
         self.ebtnAg.setText(_translate("PeriodicTable", "Ag"))
         self.ebtnZn.setText(_translate("PeriodicTable", "Zn"))
-        self.label_3.setText(_translate("PeriodicTable", "Step 1: Choose Elements"))
+        self.label_3.setText(_translate("PeriodicTable", "Step 1: Choose Elements To Include"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    PeriodicTable = QtWidgets.QWidget()
+    ui = Ui_PeriodicTable()
+    ui.setupUi(PeriodicTable)
+    PeriodicTable.show()
+    sys.exit(app.exec_())
 

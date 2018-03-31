@@ -99,48 +99,6 @@ class MassSpec(QWidget):
                 outputList.append(entry)
         return outputList
 
-    # Removes sub tags from formula string
-    # Used in handleformulaEmitted slot, handleRemoveMolecule click handler
-    # Returns a string of charaters and ints (e.g. 'V3O4')
-    def stripSub(self, formula):
-        splitFormula = formula.split('<sub>')
-        intermediateFormula = ''.join(splitFormula)
-        splitFormula = intermediateFormula.split('</sub>')
-        finalFormula = ''.join(splitFormula)
-        return finalFormula
-
-    # Checks for '</sub>', '<sub>' in list
-    # Used in formatFormula to avoid '<sub>', '1', '</sub>', '<sub>', '0', '</sub>'
-    # Instead results in: '<sub>', '1', '0', '</sub>'
-    # Returns a boolean (e.g. True if the entry is a </sub> and is follwed by <sub>)
-    def subsub(self, inputList, index, x):
-        #print(inputList, index, x)
-        if index + 1 < len(inputList) and x == '</sub>' and inputList[index + 1] == '<sub>':
-            return True
-        elif x == '<sub>' and inputList[index - 1] == '</sub>':
-            return True
-        else:
-            return False
-
-    # Adds sub tags to appropriate place in formula
-    def formatFormula(self, formula):
-        splitFormula = list(formula)
-        formattedSplitFormula = []
-        for char in splitFormula:
-            try:
-                float(char)
-            except ValueError:
-                formattedSplitFormula.append(char)
-            else:
-                formattedSplitFormula.append('<sub>')
-                formattedSplitFormula.append(char)
-                formattedSplitFormula.append('</sub>')
-
-        # Filter out '</sub>', '<sub>'
-        formattedSplitFormula = [x for index, x in enumerate(formattedSplitFormula) if not self.subsub(formattedSplitFormula, index, x)]
-        formattedFormula = ''.join(formattedSplitFormula)
-        return formattedFormula
-
     # Adds new object to selectedMolecules state if not already in list
     # example state: [{'formula': 'H2O', 'color': 'b'}, {...}]
     def updateSelectedMoleculesList(self, formula, color):
@@ -169,7 +127,7 @@ class MassSpec(QWidget):
 
         # Finds the index of the formula object in the selectedMolecules list
         for i in self.selectedMolecules:
-            if i['formula'] == self.stripSub(formulaCell.text()):
+            if i['formula'] == utils.stripSub(formulaCell.text()):
                 formulaObject = self.selectedMolecules.pop(self.selectedMolecules.index(i))
 
         # Clears all subplots corresponding to the molecule from the graphicsView
@@ -182,7 +140,7 @@ class MassSpec(QWidget):
     def updateSelectedMoleculesTable(self):
         self.ui.selectedMoleculesTable.setRowCount(len(self.selectedMolecules))
         for i in range(len(self.selectedMolecules)):
-            formula = self.formatFormula(self.selectedMolecules[i]['formula'])
+            formula = utils.formatFormula(self.selectedMolecules[i]['formula'])
             label = QLabel(formula)
             label.setStyleSheet('QLabel { color: ' + self.selectedMolecules[i]['color'].name() + '; font-weight: bold; font-size: 16px }')
             rmBtn = QPushButton('Remove')
@@ -358,7 +316,7 @@ class MassSpec(QWidget):
     # Event handler for formula string emitted by another widget (with <sub> tags)
     def handleformulaEmitted(self, formula):
         #print('formula emitted: ', formula)
-        formula = self.stripSub(formula)
+        formula = utils.stripSub(formula)
         self.addByFormula(formula)
 
 if __name__ == '__main__':
