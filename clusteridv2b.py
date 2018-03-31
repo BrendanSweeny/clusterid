@@ -2,7 +2,6 @@
 # and specify a mass for the ligand to be added to selected masses list
 
 import sys
-import re
 import images_qr
 from PyQt5.QtWidgets import QPushButton, QWidget, QApplication, QTableWidgetItem, QLabel, QMainWindow, QLineEdit
 from PyQt5.QtGui import QIcon
@@ -18,6 +17,7 @@ from elements import Element
 from elementdata import ElementData
 import pyqtgraph as pg
 import numpy as np
+import utils
 
 #QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 
@@ -103,6 +103,8 @@ class MainWindow(QMainWindow):
         #self.ui.filterMatched.textChanged.connect(self.newHandleFilter)
         self.ui.filterMatched.returnPressed.connect(lambda: self.handleFilter(self.matchedClusters, self.ui.matchOutput, True))
 
+        self.ui.formulaLineEdit.returnPressed.connect(self.handleFindFormulaMass)
+
         ## TEST AREA ##
         #print(self.formatFormula('V4O9'))
         #print(self.formatFormula('V4O93H123'))
@@ -158,6 +160,21 @@ class MainWindow(QMainWindow):
             return
         else:
             self.absoluteTolerance = float(value)
+
+    def handleFindFormulaMass(self):
+        formulaList = utils.formulaToList(self.ui.formulaLineEdit.text())
+        if utils.validateFormulaList(self.elements, formulaList):
+            totalMass = 0
+            for index, entry in enumerate(formulaList):
+                if type(entry) is int:
+                    continue
+                elif type(entry) is str:
+                    for elem in self.elements:
+                        if elem['symbol'] == entry:
+                            totalMass += elem['mass'] * formulaList[index + 1]
+            self.ui.formulaMassLineEdit.setText(str(round(totalMass, 2)))
+        else:
+            print('Invalid Formula Entered.')
 
     # Finds all possible ways to partition the target value
     # with the values contained in a list.
@@ -233,11 +250,10 @@ class MainWindow(QMainWindow):
         for i in range(len(matchList)):
             if matchList[i]['formula']:
                 matchString = self.formatFormula(matchList[i]['formula'])
-                formulaTableItem = NumericTableItem()
-                formulaTableItem.setData(Qt.UserRole, matchList[i]['formula'])
-                #tableWidget.setItem(i, 0, formulaTableItem)
                 tableWidget.setCellWidget(i, 0, QLabel(matchString))
+                # Uses the modified QTableWidgetItem with updated sorting method
                 preciseMassTableItem = NumericTableItem(str(round(matchList[i]['preciseMass'], 5)))
+                # Sets data to the integer value of precise mass for sorting reasons
                 preciseMassTableItem.setData(Qt.UserRole, matchList[i]['preciseMass'])
                 tableWidget.setItem(i, 1, preciseMassTableItem)
                 if pctDif:
@@ -330,7 +346,7 @@ class MainWindow(QMainWindow):
         if self.ui.filterMatched.text():
             self.handleFilter(self.matchedClusters, self.ui.matchOutput, True, filterStr=self.ui.filterMatched.text())
         else:
-            print(self.matchedClusters)
+            #print(self.matchedClusters)
             self.showMatches(self.matchedClusters, self.ui.matchOutput, True)
 
     # Recursive function used to find all combinations of included elements
@@ -392,7 +408,7 @@ class MainWindow(QMainWindow):
         if self.ui.filterClusterSeries.text():
             self.handleFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False, filterStr=self.ui.filterClusterSeries.text())
         else:
-            print(combinationDicts)
+            #print(combinationDicts)
             self.showMatches(combinationDicts, self.ui.seriesOutput, False)
 
     # Allows filtering of formula or number with filter strings

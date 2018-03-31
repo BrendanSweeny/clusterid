@@ -116,8 +116,8 @@ class Ui_MainWindow(object):
         self.formulaLineEdit.setGeometry(QtCore.QRect(160, 370, 81, 21))
         self.formulaLineEdit.setObjectName("formulaLineEdit")
         self.formulaMassLineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.formulaMassLineEdit.setGeometry(QtCore.QRect(290, 370, 41, 21))
-        self.formulaMassLineEdit.setReadOnly(True)
+        self.formulaMassLineEdit.setGeometry(QtCore.QRect(290, 370, 61, 21))
+        self.formulaMassLineEdit.setReadOnly(False)
         self.formulaMassLineEdit.setObjectName("formulaMassLineEdit")
         self.label_11 = QtWidgets.QLabel(self.centralwidget)
         self.label_11.setGeometry(QtCore.QRect(250, 370, 41, 20))
@@ -150,7 +150,17 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Step 2: Which Charged Species Has A Mass of X?"))
         self.label_3.setText(_translate("MainWindow", "Step 4: What is the Mass of Every Combination of Element"))
         self.label_8.setText(_translate("MainWindow", "Step 3: What is the Mass of the Following Formula?"))
-        self.label_9.setText(_translate("MainWindow", "Up to the Specified Number of Max Atoms?"))
+        self.label_9.setText(_translate("MainWindow", "Up to the Specified Number of Max Atoms (per element)?"))
         self.label_10.setText(_translate("MainWindow", "Chemical Formula:"))
         self.label_11.setText(_translate("MainWindow", "Mass:"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
 

@@ -17,6 +17,7 @@ from PyQt5.QtCore import QPoint, pyqtSignal, pyqtSlot, Qt
 from elementdata import ElementData
 import pyqtgraph as pg
 import numpy as np
+import utils
 
 class MassSpec(QWidget):
     def __init__(self):
@@ -67,65 +68,13 @@ class MassSpec(QWidget):
         self.ui.qlxpos.setText(str(xVal))
         self.ui.qlypos.setText(str(yVal))
 
-    # Recursive function that breaks up molecular formula to list of elements
-    # and number of each element
-    # Used in addByFormula
-    # Returns formula list, ex. ['V', 2, 'Al', 2, 'O', 4]
-    def formulaToList(self, formula, depth=0, resultList=[], workingEntry=''):
-        if formula:
-            # first iteration working entry is empty string
-            if not workingEntry:
-                workingEntry = formula[0]
-            # Case: working entry is a character and next a character
-            elif workingEntry.isalpha() and formula[0].isalpha():
-                #print('alpha+alpha')
-                if workingEntry[-1].isupper() and formula[0].islower():
-                    #print('upper+lower')
-                    workingEntry = workingEntry + formula[0]
-                elif workingEntry[-1].isupper() and formula[0].isupper():
-                    resultList.append(workingEntry)
-                    resultList.append(1)
-                    workingEntry = formula[0]
-                elif workingEntry[-1].islower() and formula[0].isupper():
-                    resultList.append(workingEntry)
-                    resultList.append(1)
-                    workingEntry = formula[0]
-            # Case: working entry is a character and next is a number
-            elif workingEntry.isalpha() and formula[0].isdigit():
-                #print('alpha+num')
-                resultList.append(workingEntry)
-                workingEntry = formula[0]
-            # Case: working entry is number and next is number
-            elif workingEntry.isdigit() and formula[0].isdigit():
-                #print('num+num')
-                workingEntry = workingEntry + formula[0]
-            # Case: working entry is number and next is a character
-            elif workingEntry.isdigit() and formula[0].isalpha():
-                #print('num+alpha')
-                resultList.append(int(workingEntry))
-                workingEntry = formula[0]
-            #resultList.add(formula[0])
-            return self.formulaToList(formula[1:], depth + 1, resultList[:], workingEntry)
-
-        # Function terminates when there are no more chars in the formula str
-        else:
-            # Handles what's left in the workingEntry after formula str is empty
-            if workingEntry.isalpha():
-                resultList.append(workingEntry)
-                resultList.append(1)
-            elif workingEntry.isdigit():
-                resultList.append(int(workingEntry))
-            else:
-                resultList.append(workingEntry)
-            return resultList
-
     # Function that removes duplicate elements from a formula list
     # Used in addByFormula
     # Returns new list, ex. 'CCl4' or CClClClCl --> ['C', 1, 'Cl', 4]
     def consolidateFormulaList(self, formulaList):
         outputList = []
         for index in range(len(formulaList)):
-            if not self.isFloat(formulaList[index]) and formulaList[index].isalpha():
+            if not utils.isFloat(formulaList[index]) and formulaList[index].isalpha():
                 if formulaList[index] not in outputList:
                     outputList.append(formulaList[index])
                     outputList.append(formulaList[index + 1])
@@ -191,15 +140,6 @@ class MassSpec(QWidget):
         formattedSplitFormula = [x for index, x in enumerate(formattedSplitFormula) if not self.subsub(formattedSplitFormula, index, x)]
         formattedFormula = ''.join(formattedSplitFormula)
         return formattedFormula
-
-    # Checks if number can be typed to float
-    def isFloat(self, value):
-        try:
-            float(value)
-        except ValueError:
-            return False
-        else:
-            return True
 
     # Adds new object to selectedMolecules state if not already in list
     # example state: [{'formula': 'H2O', 'color': 'b'}, {...}]
@@ -296,29 +236,6 @@ class MassSpec(QWidget):
             isotope[1] = isotope[1] / maximum
         return isotopeList
 
-    # Checks if element symbol is in self.elements list of objects
-    def validElement(self, entry):
-        for element in self.elements:
-            if entry == element['symbol']:
-                return True
-        return False
-
-    def validateFormulaList(self, formulaList):
-        isValid = True
-        if not formulaList:
-            isValid = False
-
-        for entry in formulaList:
-            # Skip if it's a number
-            if self.isFloat(entry):
-                continue
-            # Check if it's an element
-            else:
-                for element in self.elements:
-                    if not self.validElement(entry):
-                        isValid = False
-        return isValid
-
     # Consolidates the final isotope list by calling isotopeIndex to check
     # if an isotope already exists in the output
     # Adds abundances if isotope already exists, otherwise adds entry to output
@@ -413,8 +330,8 @@ class MassSpec(QWidget):
         #print(color)
 
         # Convert formula text to list of elements and their number
-        formulaList = self.formulaToList(formula)
-        print(formulaList)
+        formulaList = utils.formulaToList(formula)
+        #print(formulaList)
 
         # Consolidate the list and sum repeated elements
         consolidatedList = self.consolidateFormulaList(formulaList)
@@ -427,7 +344,7 @@ class MassSpec(QWidget):
                 inList = True
 
         # Validates the formula to be added (Checks if all symbols are in self.elements)
-        if not inList and self.validateFormulaList(consolidatedList):
+        if not inList and utils.validateFormulaList(self.elements, consolidatedList):
             self.updateSelectedMoleculesList(formula, color)
             self.updateSelectedMoleculesTable()
             self.generateMassSpectrum(consolidatedList, formula, color)
