@@ -81,7 +81,8 @@ class MainWindow(QMainWindow):
 
         # Filter line edit for the cluster series
         #self.ui.filterClusterSeries.textChanged.connect(lambda: self.handleFilter(self.ui.seriesOutput, False))
-        self.ui.filterClusterSeries.returnPressed.connect(lambda: self.handleFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False))
+        self.ui.filterClusterSeries.returnPressed.connect(lambda: self.handleFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False, self.ui.filterClusterSeries.text()))
+        self.ui.filterClusterSeries.setToolTip('Test Tooltip')
 
         # Allows user to set the max single atom number to generate cluster
         # series for
@@ -102,13 +103,21 @@ class MainWindow(QMainWindow):
         self.ui.seriesOutput.clicked.connect(self.handleCellClicked)
 
         #self.ui.filterMatched.textChanged.connect(self.newHandleFilter)
-        self.ui.filterMatched.returnPressed.connect(lambda: self.handleFilter(self.matchedClusters, self.ui.matchOutput, True))
+        self.ui.filterMatched.returnPressed.connect(lambda: self.handleFilter(self.matchedClusters, self.ui.matchOutput, True, self.ui.filterMatched.text()))
 
         self.ui.formulaLineEdit.returnPressed.connect(self.handleFindFormulaMass)
+
+        self.ui.clearClusterFilterBtn.clicked.connect(lambda: self.handleClearFilter(self.clusterSeriesDicts, self.ui.seriesOutput, False, self.ui.filterClusterSeries))
+        self.ui.clearMatchFilterBtn.clicked.connect(lambda: self.handleClearFilter(self.matchedClusters, self.ui.matchOutput, True, self.ui.filterMatched))
 
         ## TEST AREA ##
         #print(self.formatFormula('V4O9'))
         #print(self.formatFormula('V4O93H123'))
+
+    def handleClearFilter(self, combinations, tableWidget, pctDif, filterLineEdit, filterStr=''):
+        filterLineEdit.setText('')
+        self.handleFilter(combinations, tableWidget, pctDif, filterStr)
+
 
     # Slot for emitted element symbol and checked boolean from periodicTableWidget
     # Updates list of selected element objects
@@ -333,9 +342,7 @@ class MainWindow(QMainWindow):
 
     # Allows filtering of formula or number with filter strings
     # separataed by commas
-    def handleFilter(self, combinations, tableWidget, pctDif, filterStr=[]):
-        if not filterStr:
-            filterStr = self.sender().text()
+    def handleFilter(self, combinations, tableWidget, pctDif, filterStr=''):
         splitFilterStr = filterStr.split(',')
         filteredEntries = []
 
