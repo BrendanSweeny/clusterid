@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'clusteridv2b.ui'
+# Form implementation generated from reading ui file 'clusterid.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
@@ -148,9 +148,9 @@ class Ui_MainWindow(object):
         self.label_7.setText(_translate("MainWindow", "Filter:"))
         self.seriesOutput.setSortingEnabled(True)
         self.label_2.setText(_translate("MainWindow", "Step 2: Which Charged Species Has A Mass of X?"))
-        self.label_3.setText(_translate("MainWindow", "Step 4: What is the Mass of Every Combination of Element"))
+        self.label_3.setText(_translate("MainWindow", "Step 4: What is the Mass of All Combinations of Selected Elements?"))
         self.label_8.setText(_translate("MainWindow", "Step 3: What is the Mass of the Following Formula?"))
-        self.label_9.setText(_translate("MainWindow", "Up to the Specified Number of Max Atoms (per element)?"))
+        self.label_9.setText(_translate("MainWindow", "(e.g. VxOy, where x and y equal 0 to \"Max Atoms\")"))
         self.label_10.setText(_translate("MainWindow", "Chemical Formula:"))
         self.label_11.setText(_translate("MainWindow", "Mass:"))
 

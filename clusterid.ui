@@ -270,7 +270,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Step 4: What is the Mass of Every Combination of Element</string>
+     <string>Step 4: What is the Mass of All Combinations of Selected Elements?</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
@@ -310,7 +310,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Up to the Specified Number of Max Atoms (per element)?</string>
+     <string>(e.g. VxOy, where x and y equal 0 to &quot;Max Atoms&quot;)</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_10">

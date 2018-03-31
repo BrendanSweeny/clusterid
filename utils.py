@@ -68,6 +68,9 @@ def validElement(elements, entry):
             return True
     return False
 
+# Validates a list generated from formulaToList
+# Validation returns True if all strings in the list match element symbols
+# included in the element dicts passed as the first argument
 def validateFormulaList(elements, formulaList):
     isValid = True
     if not formulaList:
