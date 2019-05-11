@@ -28,7 +28,7 @@ def recursiveFindCombinations(target, numList, tol, depth=0, combination=[], ans
       #print('n:', numList[0], 'maxIons:', maxIons, 'i:', i, 'total:', i * numList[0], 'remainder:', remainder, 'numList:', numList[1:], 'combo:', combination, 'answer:', answer)
 
       # Recursion: calls the function for the next value in numList
-      recursiveFindCombinations(remainder, numList[1:], tol, depth + 1, combination, answer=answer)
+      recursiveFindCombinations(remainder, numList[1:], tol, depth + 1, combination, answer)
   return answer
 
 # Finds the precise mass of the match, used to calculate % difference

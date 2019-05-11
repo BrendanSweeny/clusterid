@@ -289,7 +289,8 @@ class MassSpec(QWidget):
 
         # Convert formula text to list of elements and their number
         formulaList = utils.formulaToList(formula)
-        #print(formulaList)
+        # Flatten formulaList to remove multi-level parentheses:
+        formulaList = utils.flattenFormulaList(formulaList)
 
         # Consolidate the list and sum repeated elements
         consolidatedList = self.consolidateFormulaList(formulaList)
@@ -315,7 +316,6 @@ class MassSpec(QWidget):
 
     # Event handler for formula string emitted by another widget (with <sub> tags)
     def handleformulaEmitted(self, formula):
-        #print('formula emitted: ', formula)
         formula = utils.stripSub(formula)
         self.addByFormula(formula)
 

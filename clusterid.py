@@ -1,24 +1,42 @@
 # TODO: Add a 'custom field' to periodic table to define a molecule or ligand
 # and specify a mass for the ligand to be added to selected masses list
+# TODO: remove target val of 217 and provide a check for targetVal somewhere
 
 import sys
 import images_qr
 from PyQt5.QtWidgets import QPushButton, QWidget, QApplication, QTableWidgetItem, QLabel, QMainWindow, QLineEdit
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import QPoint, pyqtSignal, pyqtSlot, Qt
 from clusteridui import Ui_MainWindow
 from periodictableui import Ui_PeriodicTable
 from massspecui import Ui_MassSpec
 from massspecplot import MassSpec
 from periodictable import PeriodicTable
+from tofviewwidget import TofView
 import math
 from operator import attrgetter, itemgetter
 from elements import Element
+from ligand import Ligand
 from elementdata import ElementData
 import utils
 import findMatch
+import os
+import re
+'''
+import ctypes
+user32 = ctypes.windll.user32
+user32.SetProcessDPIAware()
 
-#QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+if hasattr(Qt, 'AA_EnableHighDpiScaling'):
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+'''
+
+app = QApplication(sys.argv)
+
+#QApplication.setAttribute(Qt.AA_Use96Dpi, True)
+# os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '0'
 
 # Redefined 'less than' function for QTableWidgetItem that allows data stored
 # as integer (rather than string) to be used when sorting by column
@@ -32,9 +50,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
         self.elements = ElementData().elements
-
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -60,11 +76,15 @@ class MainWindow(QMainWindow):
 
         self.periodicTableWidget = PeriodicTable()
         self.massSpecWidget = MassSpec()
+        self.tofView = TofView()
         self.ui.tabWidget.insertTab(0, self.periodicTableWidget, 'Periodic Table')
         self.ui.tabWidget.insertTab(1, self.massSpecWidget, 'Mass Spec Plot')
+        self.ui.tabWidget.insertTab(2, self.tofView, 'TOF View')
 
         # Connects symbol emitted from periodicTableWidget to slot
         self.periodicTableWidget.elementEmitted.connect(self.handleElementClicked)
+
+        self.periodicTableWidget.elementEmitted.connect(self.tofView.handleElementClicked)
 
         self.formulaEmitted.connect(self.massSpecWidget.handleformulaEmitted)
 
@@ -111,8 +131,6 @@ class MainWindow(QMainWindow):
         self.ui.clearMatchFilterBtn.clicked.connect(lambda: self.handleClearFilter(self.matchedClusters, self.ui.matchOutput, True, self.ui.filterMatched))
 
         ## TEST AREA ##
-        #print(self.formatFormula('V4O9'))
-        #print(self.formatFormula('V4O93H123'))
 
     def handleClearFilter(self, combinations, tableWidget, pctDif, filterLineEdit, filterStr=''):
         filterLineEdit.setText('')
@@ -121,14 +139,24 @@ class MainWindow(QMainWindow):
 
     # Slot for emitted element symbol and checked boolean from periodicTableWidget
     # Updates list of selected element objects
-    def handleElementClicked(self, symbol, checked):
-        elementObject = self.periodicTable[symbol]
-        mass = self.periodicTable[symbol].mass
-        symbol = self.periodicTable[symbol].symbol
-        if checked and elementObject not in self.selectedElements:
+    def handleElementClicked(self, elementObject, checked):
+        mass = elementObject.mass
+        symbol = elementObject.symbol
+        formulaList = utils.formulaToList(symbol)
+        if not utils.validateFormulaList(self.elements, formulaList):
+            self.statusBar().showMessage('Error: Invalid Formula Entered', 5000)
+        elif checked and elementObject not in self.selectedElements:
             self.selectedElements.append(elementObject)
         elif not checked:
             self.selectedElements.remove(elementObject)
+
+    def handleLigandClicked(self, ligandObject, checked):
+        mass = ligandObject.mass
+        formula = ligandObject.symbol
+        if checked and ligandObject not in self.selectedElements:
+            self.selectedElements.append(ligandObject)
+        elif not checked:
+            self.selectedElements.remove(ligandObject)
 
     # Updates target mass when line edit value changes
     def updateTarget(self, value):
@@ -160,18 +188,11 @@ class MainWindow(QMainWindow):
     def handleFindFormulaMass(self):
         formulaList = utils.formulaToList(self.ui.formulaLineEdit.text())
         if utils.validateFormulaList(self.elements, formulaList):
-            totalMass = 0
-            for index, entry in enumerate(formulaList):
-                if type(entry) is int:
-                    continue
-                elif type(entry) is str:
-                    for elem in self.elements:
-                        if elem['symbol'] == entry:
-                            totalMass += elem['mass'] * formulaList[index + 1]
+            totalMass = utils.recursiveFindMass(formulaList, self.elements)
             self.ui.formulaMassLineEdit.setText(str(round(totalMass, 2)))
         else:
             self.ui.formulaMassLineEdit.setText('')
-            print('Invalid Formula Entered.')
+            self.statusBar().showMessage('Error: Invalid Formula Entered', 5000)
 
     # Function that populates the table with rows to be returned for the find matches functionality
     # elementObjects: a list of objects repesenting elements in the periodic table
@@ -183,6 +204,7 @@ class MainWindow(QMainWindow):
 
         for i in range(len(matchList)):
             if matchList[i]['formula']:
+                # Adds <sub> tags to the formula string
                 matchString = utils.formatFormula(matchList[i]['formula'])
                 tableWidget.setCellWidget(i, 0, QLabel(matchString))
                 # Uses the modified QTableWidgetItem with updated sorting method
@@ -222,12 +244,11 @@ class MainWindow(QMainWindow):
 
     def handleFindMatches(self):
         # Find elemental masses for element list populated by pushbuttons
-        sortedElementObjects = sorted(self.selectedElements, key=attrgetter('mass'), reverse=True)
-        #for element in self.selectedElements:
-            #selectedMasses.append(self.periodicTable[element].mass)
-
         # Sort masses highest to lowest
-        #sortedMasses = sorted(selectedMasses, reverse=True)
+        sortedElementObjects = sorted(self.selectedElements, key=attrgetter('mass'), reverse=True)
+        # Sorts by object type (ligands at the end):
+        sortedElementObjects.sort(key= lambda x: type(x) is Ligand)
+
         # Create template of 0s for 'combinations' list used in recursive function
         sortedMasses = [element.mass for element in sortedElementObjects]
         combinationTemplate = [0 for i in sortedMasses]
@@ -239,7 +260,7 @@ class MainWindow(QMainWindow):
         # Sort answers by total atoms
         sortedallanswers = sorted(allanswers, key=sum)
 
-        # Create list of dicts and populate with first 20 answers (by lowest
+        # Create list of dicts and populate with answers (by lowest
         # total atoms), pct dif from target, and precise mass
         answerDicts = []
         for answer in sortedallanswers[:]:
@@ -359,7 +380,6 @@ class MainWindow(QMainWindow):
         self.showMatches(filteredEntries, tableWidget, pctDif)
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

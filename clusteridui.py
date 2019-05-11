@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'clusterid.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.8.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(799, 904)
+        MainWindow.resize(799, 900)
+        MainWindow.setMaximumSize(QtCore.QSize(800, 900))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.btnFindMatches = QtWidgets.QPushButton(self.centralwidget)
@@ -138,7 +139,7 @@ class Ui_MainWindow(object):
         self.clearMatchFilterBtn.setObjectName("clearMatchFilterBtn")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 799, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 799, 31))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)

@@ -26,6 +26,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.exe
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -100,5 +101,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Local Folders
+gitignore/
+previous_versions/
+testfiles/
 
 # End of https://www.gitignore.io/api/python
