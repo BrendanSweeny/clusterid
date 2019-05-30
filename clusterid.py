@@ -1,6 +1,8 @@
-# TODO: Add a 'custom field' to periodic table to define a molecule or ligand
-# and specify a mass for the ligand to be added to selected masses list
 # TODO: remove target val of 217 and provide a check for targetVal somewhere
+# TODO: When ligand is updated without clearing, it does not use the new ligand for
+# finding target mass
+# TODO: When an "Invalid Formula Error" is thrown, things hang and stop working when
+# user proceeds entering new values <-- I can't seem to reproduce this anymore!
 
 import sys
 import images_qr

@@ -60,6 +60,11 @@ def formulaToList(formula, depth=0, resultList=[], workingEntry=''):
         # first iteration working entry is empty string
         if not workingEntry:
             workingEntry = formula[0]
+        # If the next entry is a symbol, it will just pass it to the output list
+        # since it will be caught in the validation step
+        elif workingEntry.isalnum() and formula[0] in '!@#$%^&*':
+            resultList.append(workingEntry)
+            workingEntry = formula[0]
         # Case: working entry is a character and next a character
         elif workingEntry.isalpha() and formula[0].isalpha():
             #print('alpha+alpha')
