@@ -1,8 +1,4 @@
 # TODO: remove target val of 217 and provide a check for targetVal somewhere
-# TODO: When ligand is updated without clearing, it does not use the new ligand for
-# finding target mass
-# TODO: When an "Invalid Formula Error" is thrown, things hang and stop working when
-# user proceeds entering new values <-- I can't seem to reproduce this anymore!
 
 import sys
 import images_qr
@@ -139,7 +135,7 @@ class MainWindow(QMainWindow):
         self.handleFilter(combinations, tableWidget, pctDif, filterStr)
 
 
-    # Slot for emitted element symbol and checked boolean from periodicTableWidget
+    # Slot for emitted element symbol or ligand and checked boolean from periodicTableWidget
     # Updates list of selected element objects
     def handleElementClicked(self, elementObject, checked):
         mass = elementObject.mass
@@ -151,14 +147,6 @@ class MainWindow(QMainWindow):
             self.selectedElements.append(elementObject)
         elif not checked:
             self.selectedElements.remove(elementObject)
-
-    def handleLigandClicked(self, ligandObject, checked):
-        mass = ligandObject.mass
-        formula = ligandObject.symbol
-        if checked and ligandObject not in self.selectedElements:
-            self.selectedElements.append(ligandObject)
-        elif not checked:
-            self.selectedElements.remove(ligandObject)
 
     # Updates target mass when line edit value changes
     def updateTarget(self, value):

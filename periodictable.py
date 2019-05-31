@@ -55,27 +55,42 @@ class PeriodicTable(QWidget):
         elementObject = self.periodicTable[symbol]
         self.elementEmitted.emit(elementObject, checked)
 
-    def retrieveLigandWidgets(self, senderName):
+    def retrieveLigandWidgets(self):
+        senderName = self.sender().objectName()
         rowNumber = senderName[-1]
+
+        # Find the widgets and stored ligand object corresponding to the row:
         cb = getattr(self.ui, 'ligCheckBox' + rowNumber)
         formulaLineEdit = getattr(self.ui, 'ligFormula' + rowNumber)
         massLineEdit = getattr(self.ui, 'ligMass' + rowNumber)
-        return cb, formulaLineEdit, massLineEdit, rowNumber
+        storedLigand = getattr(self, 'ligand_' + rowNumber)
+        return cb, formulaLineEdit, massLineEdit, rowNumber, storedLigand
 
     def handleLigandReturnPressed(self):
-        senderName = self.sender().objectName()
-        # Find which ligand row the signal came from:
+        # Find widgets corresponding to ligand row:
         (cb, formulaLineEdit,
-            massLineEdit, rowNumber) = self.retrieveLigandWidgets(senderName)
+            massLineEdit, rowNumber, storedLigand) = self.retrieveLigandWidgets()
+
+        # Functionality that updates fields and ligandObject when the formulaLineEdit
+        # is changed to a new value (i.e. is not cleared first using the button)
+        if storedLigand:
+            if cb.isChecked():
+                # Removes ligand already in clusterid.py list:
+                self.emitLigand(False)
+            # Removes stored ligandObject:
+            setattr(self, 'ligand_' + rowNumber, None)
+            # Emits new ligand object
+            self.emitLigand(True)
+        # Functionality for when the field has been cleared or is empty
+        else:
+            self.emitLigand(True)
         cb.setChecked(True)
-        self.emitLigand(True)
 
     # Clears the particular custom ligand row
     def clearCustomLigand(self):
-        senderName = self.sender().objectName()
-        # Find which ligand row the signal came from:
+        # Find widgets corresponding to ligand row:
         (cb, formulaLineEdit,
-            massLineEdit, rowNumber) = self.retrieveLigandWidgets(senderName)
+            massLineEdit, rowNumber, storedLigand) = self.retrieveLigandWidgets()
         if cb.isChecked():
             cb.setChecked(False)
             self.emitLigand(False)
@@ -106,13 +121,10 @@ class PeriodicTable(QWidget):
 
     # Emits custom ligand object to custerid MainWindow and tofviewwidget
     def emitLigand(self, checked):
-        senderName = self.sender().objectName()
-        # Find which ligand row the signal came from:
-        rowNumber = senderName[-1]
-        # Find the widget attribute corresponding to the ligand row:
-        storedLigand = getattr(self, 'ligand_' + rowNumber)
-        # Get the entered formula text:
-        formulaLineEdit = getattr(self.ui, 'ligFormula' + rowNumber)
+        # Find widgets corresponding to ligand row:
+        (cb, formulaLineEdit,
+            massLineEdit, rowNumber, storedLigand) = self.retrieveLigandWidgets()
+
         formulaText = formulaLineEdit.text()
         if formulaText != '':
             # Re-emit the same object if it exists (otherwise it won't be toggled
@@ -121,6 +133,7 @@ class PeriodicTable(QWidget):
                 self.elementEmitted.emit(storedLigand, checked)
             else:
                 ligandObject = self.generateLigandObject(formulaText, rowNumber)
+                # Store ligand object
                 setattr(self, 'ligand_' + rowNumber, ligandObject)
                 # Emit object:
                 self.elementEmitted.emit(ligandObject, checked)

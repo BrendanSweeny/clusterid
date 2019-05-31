@@ -30,10 +30,15 @@ def validateFormulaList(elements, formulaList):
         isValid = False
 
     depth = 0
-    for entry in formulaList:
-        # Skip if it's a number
+    for index, entry in enumerate(formulaList):
+        # If entry is a number:
         if isFloat(entry):
-            continue
+            # Formulas should not start with a number
+            if index == 0:
+                isValid = False
+            # Skips all other numbers in the formula
+            else:
+                continue
         # Skip if its a parens
         elif entry == '(':
             depth += 1
@@ -60,7 +65,7 @@ def formulaToList(formula, depth=0, resultList=[], workingEntry=''):
         # first iteration working entry is empty string
         if not workingEntry:
             workingEntry = formula[0]
-        # If the next entry is a symbol, it will just pass it to the output list
+        # Case: next entry is a symbol, it will just pass it to the output list
         # since it will be caught in the validation step
         elif workingEntry.isalnum() and formula[0] in '!@#$%^&*':
             resultList.append(workingEntry)

@@ -66,7 +66,8 @@ class TestMainWindowFunctions(unittest.TestCase):
                     '((((((H(He)(Be(Li(P))))))))2': False,  # Missing a ')'
                     'Al2#O3': False,
                     'AL2O3': False,
-                    '(CO)al2O3': False}
+                    '(CO)al2O3': False,
+                    '2Al2O3': False}
 
         for chemical in formulas:
             self.assertEqual(utils.validateFormulaList(self.elements, utils.formulaToList(chemical)), formulas[chemical], msg='Failed on ' + chemical)
